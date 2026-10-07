@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>EGA Policy Change Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="mappings.js"></script>
+<style>
+/* Layout: header + numbered stepper, then a two-column desk: working form on the left, a sticky "case file" (signers, attachments, readiness) on the right; stacks on phones. */
+:root{
+  --bg:#F3F5F3; --surface:#FFFFFF; --sunk:#EAEEEC; --ink:#17201E; --muted:#5B6864; --line:#D5DCD9;
+  --accent:#0E5A4C; --accent-ink:#FFFFFF; --accent-soft:#DDEDE8;
+  --warn:#8A5300; --warn-soft:#FBF0DC; --bad:#A3282B; --bad-soft:#F9E3E3; --ok:#22704A; --ok-soft:#E0F1E7;
+  --f-ui:"Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1514; --surface:#161E1D; --sunk:#1C2624; --ink:#E5ECE9; --muted:#97A8A3; --line:#2A3634;
+  --accent:#5BC1A7; --accent-ink:#0B1A16; --accent-soft:#183129;
+  --warn:#E3AA4E; --warn-soft:#2E2414; --bad:#F08A8A; --bad-soft:#341B1C; --ok:#6CCB95; --ok-soft:#16301F; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F1514; --surface:#161E1D; --sunk:#1C2624; --ink:#E5ECE9; --muted:#97A8A3; --line:#2A3634;
+  --accent:#5BC1A7; --accent-ink:#0B1A16; --accent-soft:#183129;
+  --warn:#E3AA4E; --warn-soft:#2E2414; --bad:#F08A8A; --bad-soft:#341B1C; --ok:#6CCB95; --ok-soft:#16301F; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1200px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;margin:0}
+code,.mono{font-family:var(--f-mono);font-size:12.5px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding-block:22px 14px;border-bottom:1px solid var(--line)}
+header.top h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+header.top .who{color:var(--muted)}
+header.top .spacer{flex:1}
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:var(--r);padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.choice:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.banner{margin-top:12px;padding:9px 12px;border-radius:var(--r);background:var(--warn-soft);color:var(--warn);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:inherit}
+nav.steps{display:flex;gap:4px;overflow-x:auto;padding-block:14px;margin:0;list-style:none}
+nav.steps button{flex:1 0 auto;font:inherit;background:none;border:0;border-bottom:3px solid var(--line);padding:6px 10px 8px;color:var(--muted);cursor:pointer;text-align:left;white-space:nowrap}
+nav.steps button .n{font-family:var(--f-mono);font-size:11px;margin-right:6px}
+nav.steps button.on{color:var(--ink);border-color:var(--accent);font-weight:600}
+nav.steps button.done{color:var(--ink)}
+.desk{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.desk{grid-template-columns:minmax(0,1fr)}}
+.pane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.pane > h2{font-size:18px;margin-bottom:4px}
+.lede{color:var(--muted);margin:0 0 16px;max-width:65ch}
+fieldset{border:0;border-top:1px solid var(--line);margin:18px 0 0;padding:14px 0 0}
+legend{font-weight:700;font-size:13px;padding:0 8px 0 0;display:flex;gap:8px;align-items:center}
+legend .sec{font-family:var(--f-mono);font-size:11px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:3px;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px 14px}
+.grid.two{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+label.f.wide{grid-column:1/-1}
+input[type=text],input[type=date],input[type=tel],select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px;width:100%;min-width:0}
+textarea{min-height:90px;font-family:var(--f-mono);font-size:12px}
+.hint{font-size:11.5px;color:var(--muted)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--ink);cursor:pointer}
+.chk input{margin-top:3px;accent-color:var(--accent)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:var(--r);padding:5px 10px;cursor:pointer;font-size:13px;background:var(--bg)}
+.seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.seg input{accent-color:var(--accent)}
+.types{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.choice{display:block;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;background:var(--bg);position:relative}
+.choice input{position:absolute;opacity:0}
+.choice:has(input:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.choice .code{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.choice .t{font-weight:700;font-size:15px;margin:2px 0 6px}
+.choice .d{font-size:12.5px;color:var(--muted)}
+table.rows{width:100%;border-collapse:collapse;min-width:640px}
+table.rows th{font-size:11.5px;color:var(--muted);font-weight:500;text-align:left;padding:4px 6px 4px 0}
+table.rows td{padding:3px 6px 3px 0;vertical-align:middle}
+table.rows td.n{font-family:var(--f-mono);color:var(--muted);width:18px}
+table.rows input[type=text]{padding:5px 7px}
+.scroll{overflow-x:auto}
+.total{font-family:var(--f-mono);font-size:12px;margin-top:6px}
+.total.bad{color:var(--bad)} .total.good{color:var(--ok)}
+.navrow{display:flex;justify-content:space-between;gap:10px;margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.consent{background:var(--sunk);border-radius:var(--r);padding:12px 14px;font-size:13px;max-width:72ch}
+.stamp{font-family:var(--f-mono);font-size:11.5px;color:var(--ok)}
+/* case file */
+aside.case{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){aside.case{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.card h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between}
+.formid{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.formid .code{font-family:var(--f-mono);font-size:16px;font-weight:500}
+.formid .copies{font-size:12px;color:var(--muted)}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+ul.list li{display:flex;gap:8px;align-items:flex-start;font-size:13px;min-width:0}
+ul.list li .meta{display:block;font-size:11.5px;color:var(--muted)}
+.pill{font-size:11px;font-weight:600;border-radius:99px;padding:1px 8px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;margin-top:6px}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)}
+.warnlist li{color:var(--warn)}
+.empty{color:var(--muted);font-size:12.5px}
+.result{margin-top:14px;padding:12px 14px;border-radius:var(--r);background:var(--ok-soft);color:var(--ok);font-size:13px}
+.result.err{background:var(--bad-soft);color:var(--bad)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:var(--r);font-size:13px;max-width:calc(100vw - 32px)}
+.summary dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:0;font-size:13px}
+.summary dt{color:var(--muted)} .summary dd{margin:0;min-width:0;overflow-wrap:anywhere}
+@media (prefers-reduced-motion:no-preference){.choice,.btn,nav.steps button{transition:border-color .12s,background .12s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Policy Change Desk</h1>
+    <span class="who">EGA Financial · Beneva in-force changes</span>
+    <span class="spacer"></span>
+    <button class="btn ghost" id="btnNew" type="button">Start blank</button>
+    <button class="btn ghost" id="btnClear" type="button" hidden>Confirm: clear everything</button>
+  </header>
+  <div class="banner" id="sampleBanner" hidden><b>Example case loaded.</b> The Okafor family below is sample data, so you can see a filled form end to end. Choose <b>Start blank</b> for a real client.</div>
+
+  <nav class="steps" id="steps" aria-label="Steps"></nav>
+
+  <div class="desk">
+    <main class="pane" id="main">
+
+      <!-- STEP 1 -->
+      <section data-step="0">
+        <h2>What does the client want to change?</h2>
+        <p class="lede">Each request maps to one Beneva form. The case file on the right updates as you go: who signs, what to attach, and what's still missing.</p>
+        <div class="types" id="typeCards"></div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section data-step="1" hidden>
+        <h2>Policy on file</h2>
+        <p class="lede">Load what you already have, then fill any gaps. The loader accepts the client record from the intake tool, a saved policy record, or an earlier change record.</p>
+        <div class="seg" style="gap:8px">
+          <label class="btn" for="fileLoad" style="display:inline-flex">Load client or policy file (.json)</label>
+          <input type="file" id="fileLoad" accept=".json,application/json" hidden>
+          <button class="btn ghost" type="button" id="btnPasteToggle">Paste JSON instead</button>
+          <button class="btn ghost" type="button" id="btnSavePolicy">Save policy record</button>
+        </div>
+        <div id="pasteBox" hidden style="margin-top:10px">
+          <textarea id="pasteJson" placeholder='{"client": {"name": "…"}}'></textarea>
+          <button class="btn" type="button" id="btnPasteLoad" style="margin-top:6px">Load pasted record</button>
+        </div>
+        <div id="loadNote" class="hint" style="margin-top:6px"></div>
+
+        <fieldset><legend>Contract</legend>
+          <div class="grid">
+            <label class="f">Policy number<input type="text" id="pol_number" data-k="policy.number"></label>
+            <label class="f">Product
+              <select id="pol_product" data-k="policy.product"><option value="whole_life">Whole life / term</option><option value="universal_life">Universal life</option></select>
+              <span class="hint">UL adds identity, third-party and advisor sections.</span></label>
+            <label class="f">Province of residence
+              <select id="pol_prov" data-k="policy.province"><option>BC</option><option>AB</option><option>SK</option><option>MB</option><option>ON</option><option value="QC">QC</option><option>NB</option><option>NS</option><option>PE</option><option>NL</option><option>YT</option><option>NT</option><option>NU</option></select></label>
+          </div>
+        </fieldset>
+        <fieldset><legend>Insured(s)</legend>
+          <div class="grid">
+            <label class="f">Insured 1, first name<input type="text" id="ins0f" data-k="policy.insureds.0.first"></label>
+            <label class="f">Insured 1, last name<input type="text" id="ins0l" data-k="policy.insureds.0.last"></label>
+            <label class="f">Insured 2, first name<input type="text" id="ins1f" data-k="policy.insureds.1.first"></label>
+            <label class="f">Insured 2, last name<input type="text" id="ins1l" data-k="policy.insureds.1.last"></label>
+          </div>
+        </fieldset>
+        <fieldset><legend>Current policyowner(s)</legend>
+          <div class="grid">
+            <label class="f">Owner 1 (full name or entity)<input type="text" id="own0" data-k="policy.owners.0.name"></label>
+            <label class="f">Owner 2<input type="text" id="own1" data-k="policy.owners.1.name"></label>
+            <label class="f">Owner is
+              <select id="own_kind" data-k="policy.owner_kind"><option value="individual">Individual(s)</option><option value="corporation">Corporation / other entity</option><option value="trust">Trust</option><option value="estate">Estate</option></select></label>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+            <label class="chk"><input type="checkbox" id="own_unfit" data-k="policy.owner_unfit">Owner is unfit to sign (acting under power of attorney)</label>
+          </div>
+        </fieldset>
+        <fieldset><legend>Third-party interests on the policy</legend>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label class="chk"><input type="checkbox" id="has_irrev" data-k="policy.has_irrevocable">An irrevocable beneficiary is on file</label>
+            <div class="grid" data-if="irrev"><label class="f">Irrevocable beneficiary's name<input type="text" id="irrev_name" data-k="policy.irrevocable_name"></label></div>
+            <label class="chk"><input type="checkbox" id="has_assign" data-k="policy.has_assignment">The policy is assigned to a lender</label>
+            <div class="grid" data-if="assigned">
+              <label class="f">Assignee<input type="text" id="asg_name" data-k="policy.assignee.name"></label>
+              <label class="f">Assignee phone<input type="tel" id="asg_phone" data-k="policy.assignee.phone"></label>
+              <label class="f">Authorized signatory, name and title<input type="text" id="asg_sig" data-k="policy.assignee.signatory"></label>
+            </div>
+            <label class="chk"><input type="checkbox" id="bankrupt" data-k="policy.owner_bankrupt">The owner is an undischarged bankrupt</label>
+            <div class="grid" data-if="bankrupt">
+              <label class="f">Trustee in bankruptcy, name and title<input type="text" id="tib_name" data-k="policy.bankruptcy_trustee.name"></label>
+              <label class="f">Trustee phone<input type="tel" id="tib_phone" data-k="policy.bankruptcy_trustee.phone"></label>
+            </div>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- STEP 3 -->
+      <section data-step="2" hidden>
+        <h2 id="detailTitle">Change details</h2>
+        <p class="lede" id="detailLede"></p>
+
+        <!-- Beneficiary block (beneficiary change, and section L of a transfer) -->
+        <div data-if="benefBlock">
+          <fieldset><legend><span class="sec" id="benSec">p.1</span>Primary beneficiaries, Insured 1</legend>
+            <div class="scroll"><table class="rows" id="tblPrim"></table></div>
+            <div class="total" id="totPrim"></div>
+          </fieldset>
+          <fieldset><legend>Contingent beneficiaries</legend>
+            <div class="scroll"><table class="rows" id="tblCont"></table></div>
+            <div class="total" id="totCont"></div>
+          </fieldset>
+          <fieldset><legend>Trustee for a minor beneficiary <span class="hint">(not applicable in Quebec)</span></legend>
+            <div class="grid">
+              <label class="f">Minor's first name<input type="text" id="min_f" data-k="beneficiary.minor.first"></label>
+              <label class="f">Minor's last name<input type="text" id="min_l" data-k="beneficiary.minor.last"></label>
+              <label class="f">Trustee, full name<input type="text" id="min_t" data-k="beneficiary.minor.trustee"></label>
+              <label class="f">Trustee's relationship to insured<input type="text" id="min_r" data-k="beneficiary.minor.relationship"></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- Transfer of ownership -->
+        <div data-if="isTransfer">
+          <fieldset><legend><span class="sec">A–D</span>New policyowner type</legend>
+            <div class="seg" id="segNewType">
+              <label><input type="radio" name="nt" value="individual" data-k="transfer.new_type">Individual(s)</label>
+              <label><input type="radio" name="nt" value="corporation" data-k="transfer.new_type">Corporation / entity</label>
+              <label><input type="radio" name="nt" value="trust_estate" data-k="transfer.new_type">Trust or estate</label>
+              <label><input type="radio" name="nt" value="nonprofit" data-k="transfer.new_type">Non-profit</label>
+            </div>
+          </fieldset>
+          <div data-if="ntIndividual" id="newOwners"></div>
+          <fieldset data-if="ntIndividualUL"><legend><span class="sec">A3–A4</span>Identity check and purpose (UL)</legend>
+            <div class="grid two">
+              <label class="f">How you verified identity
+                <select id="t_idm" data-k="transfer.id_method"><option value="">Select</option><option value="in_person">In person, original photo ID</option><option value="remote">Remotely, dual-process method</option></select></label>
+              <label class="f">Purpose of insurance
+                <select id="t_purp" data-k="transfer.purpose"><option value="">Select</option><option value="income">Income / loan protection</option><option value="estate">Estate conservation</option><option value="charity">Charitable donations</option></select></label>
+            </div>
+          </fieldset>
+          <fieldset data-if="ntCorp"><legend><span class="sec">B</span>Corporation or other entity</legend>
+            <div class="grid two">
+              <label class="f">Full legal name<input type="text" id="c_name" data-k="transfer.corp.name"></label>
+              <label class="f">Key activity<input type="text" id="c_act" data-k="transfer.corp.activity"></label>
+              <label class="f">Relationship to the insured<input type="text" id="c_rel" data-k="transfer.corp.relationship"></label>
+              <label class="f">Full address<input type="text" id="c_addr" data-k="transfer.corp.address"></label>
+              <label class="f">Administrator 1 (last, first)<input type="text" id="c_a0" data-k="transfer.corp.admins.0"></label>
+              <label class="f">Administrator 2<input type="text" id="c_a1" data-k="transfer.corp.admins.1"></label>
+              <label class="f">Administrator 3<input type="text" id="c_a2" data-k="transfer.corp.admins.2"></label>
+              <label class="f">Administrator 4<input type="text" id="c_a3" data-k="transfer.corp.admins.3"></label>
+            </div>
+          </fieldset>
+          <fieldset data-if="ntTrust"><legend><span class="sec">C</span>Trust or estate</legend>
+            <div class="grid two">
+              <label class="f">Name of the trust or estate<input type="text" id="tr_name" data-k="transfer.trust.name"></label>
+              <label class="f">Relationship to the insured<input type="text" id="tr_rel" data-k="transfer.trust.relationship"></label>
+              <label class="f wide">Full address<input type="text" id="tr_addr" data-k="transfer.trust.address"></label>
+            </div>
+            <div data-if="trustParties" style="margin-top:10px"><div class="hint" style="margin-bottom:6px">Trustees, beneficiaries and settlors (whole life only; UL uses form FRA1235A instead)</div>
+              <div class="scroll"><table class="rows" id="tblTrust"></table></div></div>
+          </fieldset>
+          <fieldset data-if="ntNpo"><legend><span class="sec">D</span>Non-profit organization</legend>
+            <div class="grid two">
+              <label class="f">Name of the organization<input type="text" id="n_name" data-k="transfer.npo.name"></label>
+              <label class="f">Full address<input type="text" id="n_addr" data-k="transfer.npo.address"></label>
+              <label class="f">Relationship to the insured<input type="text" id="n_rel" data-k="transfer.npo.relationship"></label>
+              <label class="f">Key activity<input type="text" id="n_act" data-k="transfer.npo.activity"></label>
+              <label class="f">Solicits the public for donations?<select id="n_sol" data-k="transfer.npo.solicits"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f">Registered with CRA?<select id="n_cra" data-k="transfer.npo.cra"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f">CRA registration number<input type="text" id="n_cran" data-k="transfer.npo.cra_number"></label>
+            </div>
+          </fieldset>
+          <fieldset data-if="ntEntity"><legend><span class="sec">M</span>Who signs for the new owner</legend>
+            <div class="grid two">
+              <label class="f">Authorized signatory, trustee or liquidator 1<input type="text" id="sg0" data-k="transfer.signatories.0"></label>
+              <label class="f">Signatory 2 (if two must sign)<input type="text" id="sg1" data-k="transfer.signatories.1"></label>
+            </div>
+          </fieldset>
+          <fieldset><legend><span class="sec">E</span>Contingent / successor owner <span class="hint">(optional)</span></legend>
+            <div class="scroll"><table class="rows" id="tblSucc"></table></div>
+          </fieldset>
+          <fieldset><legend><span class="sec">F</span>Tax declarations by the current owner</legend>
+            <div class="grid two">
+              <label class="f">1. Transfer to a spouse or common-law partner?<select id="d1" data-k="transfer.decl.spouse"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f" data-if="notSpouse">2. To a former spouse, settling rights after a breakdown?<select id="d2" data-k="transfer.decl.former_spouse"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f" data-if="formerSpouse">Date of separation<input type="date" id="d2d" data-k="transfer.decl.separation_date"></label>
+              <label class="f">3. Do both parties live in Canada at the time of transfer?<select id="d3" data-k="transfer.decl.canada"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f">4. Was money paid to the current owner for the policy?<select id="d4" data-k="transfer.decl.consideration"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              <label class="f" data-if="consideration">Amount paid<input type="text" id="d4a" data-k="transfer.decl.amount" placeholder="$"></label>
+            </div>
+          </fieldset>
+          <fieldset><legend><span class="sec">J</span>Premium payments going forward</legend>
+            <label class="f" style="max-width:520px">Payment arrangement
+              <select id="t_pay" data-k="transfer.payment">
+                <option value="">No change indicated</option>
+                <option value="0">PAD from the same bank account on file</option>
+                <option value="1">PAD from a new account, same payer (specimen cheque)</option>
+                <option value="2">Change of payer (specimen cheque + section O)</option>
+                <option value="3">Switch to annual (not for former La Capitale products)</option>
+                <option value="4">Switch to monthly (specimen cheque + section O)</option>
+              </select></label>
+          </fieldset>
+          <fieldset><legend><span class="sec">L</span>New beneficiary designation</legend>
+            <label class="chk"><input type="checkbox" id="t_cb" data-k="transfer.change_beneficiary">Also designate new beneficiaries on this form</label>
+            <div class="hint" style="margin-top:4px">Signing section F revokes existing revocable designations. If no new beneficiary is named, proceeds go to the new owner or their estate.</div>
+          </fieldset>
+        </div>
+
+        <!-- PAD (standalone, or section O of a transfer) -->
+        <div data-if="padBlock">
+          <fieldset><legend><span class="sec" id="padSec">2–5</span>Pre-authorized debit</legend>
+            <div class="grid" data-if="isPad">
+              <label class="f">Additional policy number<input type="text" id="pn2" data-k="policy.numbers_extra.0"></label>
+              <label class="f">Additional policy number<input type="text" id="pn3" data-k="policy.numbers_extra.1"></label>
+            </div>
+            <div class="grid" style="margin-top:10px">
+              <label class="f">Withdrawal
+                <select id="pad_freq" data-k="pad.frequency"><option value="monthly">Monthly</option><option value="annual">Annual (on the policy anniversary)</option></select></label>
+              <label class="f" data-if="padMonthly">Day of month (1–28)<input type="text" id="pad_day" data-k="pad.day" inputmode="numeric" maxlength="2"><span class="hint">29, 30 or 31 becomes the 28th</span></label>
+              <label class="f">Financial institution<input type="text" id="b_name" data-k="pad.bank.name"></label>
+              <label class="f wide">Branch address, city, province, postal code<input type="text" id="b_addr" data-k="pad.bank.address"></label>
+              <label class="f">Branch / transit (5)<input type="text" id="b_tr" data-k="pad.bank.transit" inputmode="numeric" maxlength="5" class="mono"></label>
+              <label class="f">Institution (3)<input type="text" id="b_in" data-k="pad.bank.institution" inputmode="numeric" maxlength="3" class="mono"></label>
+              <label class="f">Account number (up to 12)<input type="text" id="b_ac" data-k="pad.bank.account" inputmode="numeric" maxlength="12" class="mono"></label>
+            </div>
+            <div class="grid" style="margin-top:10px">
+              <label class="f">Account holder<input type="text" id="h0" data-k="pad.holders.0"></label>
+              <label class="chk" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="pad_joint" data-k="pad.joint">Joint account, both sign</label>
+              <label class="f" data-if="padJoint">Second account holder<input type="text" id="h1" data-k="pad.holders.1"></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- Third-party determination (UL; PAD and transfer) -->
+        <fieldset data-if="thirdParty"><legend><span class="sec" id="tpSec">K</span>Third-party determination (UL)</legend>
+          <div class="grid two">
+            <label class="f">Is the premium payer someone other than the owner?<select id="tp1" data-k="third_party.payer_differs"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+            <label class="f">Does a third party have use of, or access to, the policy's value?<select id="tp2" data-k="third_party.access"><option value="">Select</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+          </div>
+          <div class="grid two" data-if="tpYes" style="margin-top:10px">
+            <label class="f">Third party's name<input type="text" id="tpn" data-k="third_party.name"></label>
+            <label class="f">Date of birth (individual)<input type="date" id="tpd" data-k="third_party.dob"></label>
+            <label class="f wide">Full permanent address<input type="text" id="tpa" data-k="third_party.address"></label>
+            <label class="f">Telephone<input type="tel" id="tpp" data-k="third_party.phone"></label>
+            <label class="f">Occupation or principal business<input type="text" id="tpo" data-k="third_party.occupation"></label>
+            <label class="f">Relationship to the owner<input type="text" id="tpr" data-k="third_party.relationship"></label>
+            <label class="f">Business number (entity)<input type="text" id="tpb" data-k="third_party.business_no"></label>
+            <label class="f">Place of incorporation<input type="text" id="tpl" data-k="third_party.place"></label>
+          </div>
+        </fieldset>
+
+        <!-- Assignment -->
+        <fieldset data-if="isAssign"><legend>Assignee (lender)</legend>
+          <div class="grid two">
+            <label class="f">Assignee's full name<input type="text" id="a_name" data-k="assignment.assignee_name"></label>
+            <label class="f wide">Assignee's address<input type="text" id="a_addr" data-k="assignment.assignee_address"></label>
+          </div>
+          <p class="hint" style="margin-top:8px">The assignment is collateral. The owner keeps the right to change the beneficiary and the premium mode, and to receive disability annuity benefits.</p>
+        </fieldset>
+
+        <!-- Revoking cession -->
+        <fieldset data-if="isCession"><legend>Cessionary releasing the assignment</legend>
+          <div class="grid two">
+            <label class="f">Cessionary(s)<input type="text" id="cs" data-k="cession.cessionaries"><span class="hint">Usually the lender named on the original assignment</span></label>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- STEP 4 -->
+      <section data-step="3" hidden>
+        <h2>Compliance and signing</h2>
+        <p class="lede">These checks are the same for every change type. The signer and attachment lists on the right come from the answers in the earlier steps.</p>
+        <fieldset><legend>Disclosure and privacy consent</legend>
+          <label class="chk"><input type="checkbox" id="disc" data-k="compliance.disclosure_on_file">Advisor disclosure for EGA Financial is signed and on file for this client</label>
+          <div class="consent" style="margin-top:10px">The client consents to EGA Financial Inc. collecting, using and disclosing the personal information in this request to Beneva Inc. and its service providers, only to process and administer this change, in line with PIPEDA and the privacy statement the client signed at intake.</div>
+          <div class="grid" style="margin-top:10px">
+            <label class="f">Consent given by<input type="text" id="cons_by" data-k="compliance.consent.by"></label>
+            <label class="chk" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="cons_ok" data-k="compliance.consent.given">Client gave consent</label>
+          </div>
+          <div class="stamp" id="consStamp"></div>
+        </fieldset>
+        <fieldset><legend>Identity of the person requesting</legend>
+          <div class="grid two">
+            <label class="f">How you verified identity
+              <select id="idm" data-k="compliance.id_check.method"><option value="">Select</option><option value="in_person">In person, original photo ID</option><option value="video">Video call plus dual-process documents</option><option value="known">Existing client, verified ID on file</option></select></label>
+            <label class="f">Document reviewed<input type="text" id="idd" data-k="compliance.id_check.document" placeholder="e.g. BC driver's licence"></label>
+          </div>
+          <label class="chk" style="margin-top:10px"><input type="checkbox" id="idok" data-k="compliance.id_check.done">I confirmed the requester is the policyowner, or their authorized signatory</label>
+        </fieldset>
+        <fieldset><legend>Advisor and signing</legend>
+          <div class="grid">
+            <label class="f">Advisor
+              <select id="adv" data-k="advisor.name"><option>Timothy Tjia-Gan</option><option>Chun-Ting Ho, CFA</option></select></label>
+            <label class="f">Beneva advisor number<input type="text" id="advc" data-k="advisor.code"></label>
+            <label class="f">Signed at (city, province)<input type="text" id="sgp" data-k="signing.place"></label>
+            <label class="f">Witness, full name<input type="text" id="sgw" data-k="signing.witness"><span class="hint">An adult who is not a party to the change</span></label>
+            <label class="f">Signing date<input type="date" id="sgd" data-k="signing.date"></label>
+          </div>
+          <label class="chk" style="margin-top:10px"><input type="checkbox" id="sgpre" data-k="signing.prefill_date">Print this date on the form's date boxes. Leave unticked if people will date their own signatures.</label>
+        </fieldset>
+      </section>
+
+      <!-- STEP 5 -->
+      <section data-step="4" hidden>
+        <h2>Review and generate</h2>
+        <p class="lede">This fills Beneva's own fillable PDF. Fields stay editable, so you can still correct anything in Acrobat. Every signature line is left blank for wet or e-signature.</p>
+        <div class="summary card" id="reviewSummary" style="background:var(--bg)"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+          <button class="btn primary" type="button" id="btnPdf">Generate filled PDF</button>
+          <button class="btn" type="button" id="btnJson">Save change record (.json)</button>
+        </div>
+        <div id="blankLoader" hidden style="margin-top:12px" class="banner">
+          <span>Couldn't load the blank form from this page. Choose your copy of <code id="blankName"></code> to continue.</span>
+          <input type="file" id="blankFile" accept="application/pdf">
+        </div>
+        <div id="genResult"></div>
+      </section>
+
+      <div class="navrow">
+        <button class="btn" type="button" id="btnBack">Back</button>
+        <button class="btn primary" type="button" id="btnNext">Next</button>
+      </div>
+    </main>
+
+    <aside class="case" aria-label="Case file">
+      <div class="card">
+        <h3>Form</h3>
+        <div class="formid"><span class="code" id="cfForm">—</span><span id="cfLabel"></span></div>
+        <div class="formid"><span class="copies" id="cfCopies"></span></div>
+      </div>
+      <div class="card"><h3>Ready to generate <span id="cfReadyPill"></span></h3><ul class="list" id="cfReady"></ul></div>
+      <div class="card"><h3>Who signs <span class="pill ok" id="cfSignN"></span></h3><ul class="list" id="cfSigners"></ul></div>
+      <div class="card"><h3>Attach</h3><ul class="list" id="cfAttach"></ul></div>
+      <div class="card" id="cfWarnCard"><h3>Check before sending</h3><ul class="list warnlist" id="cfWarn"></ul></div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+const M = window.BenevaMap;
+const STEPS = ['Request','Policy on file','Details','Compliance','Generate'];
+const DRAFT_KEY = 'ega_change_desk_draft_v1';
+
+// ---------- state ----------
+function blank(){
+  return {
+    schema:'ega.policy_change.v1', id:'chg_'+Date.now().toString(36), created_at:new Date().toISOString(),
+    change_type:'beneficiary', is_sample:false,
+    policy:{carrier:'Beneva', number:'', numbers_extra:['',''], product:'whole_life', province:'BC', insureds:[{first:'',last:''},{first:'',last:''}], owners:[{name:''},{name:''}], owner_kind:'individual',
+      has_irrevocable:false, irrevocable_name:'', has_assignment:false, assignee:{name:'',phone:'',signatory:''}, owner_bankrupt:false, bankruptcy_trustee:{name:'',phone:''}, owner_unfit:false},
+    client:{},
+    advisor:{name:'Timothy Tjia-Gan', code:''},
+    signing:{place:'', date:new Date().toISOString().slice(0,10), prefill_date:false, witness:''},
+    beneficiary:{primary:[{},{},{}], contingent:[{},{},{}], minor:{}},
+    transfer:{new_type:'individual', owners:[{tax_canada:true},{tax_canada:true}], signatories:['',''], id_method:'', purpose:'', corp:{admins:['','','','']}, trust:{parties:[{},{},{},{}]}, npo:{}, contingent:[{},{}], decl:{}, payment:'', change_beneficiary:false},
+    assignment:{}, cession:{},
+    pad:{frequency:'monthly', day:'', bank:{}, holders:['',''], joint:false},
+    third_party:{},
+    compliance:{disclosure_on_file:false, consent:{given:false, by:'', at:''}, id_check:{method:'',document:'',done:false}, received:{}}
+  };
+}
+function sample(){
+  const r = blank();
+  r.is_sample = true;
+  r.change_type='ownership_transfer';
+  Object.assign(r.policy,{number:'BN-4471209', product:'universal_life', insureds:[{first:'Daniel',last:'Okafor'},{first:'',last:''}], owners:[{name:'Daniel Okafor'},{name:''}], has_irrevocable:false});
+  r.transfer.owners[0]={name:'Amara Okafor', dob:'1988-03-14', relationship:'Daughter', street:'1234 W 10th Ave', apt:'302', city:'Vancouver', province:'BC', postal:'V6H 1J8', phone_home:'', phone_cell:'604-555-0199', occupation:'Software engineer, fintech', employer:'Shopify', status:'Employee', tax_canada:true, id_doc:'passport', id_number:'AB123456', id_jurisdiction:'Canada', id_expiry:'2031-05-01'};
+  r.transfer.id_method='in_person'; r.transfer.purpose='estate';
+  r.transfer.decl={spouse:'no', former_spouse:'no', canada:'yes', consideration:'no'};
+  r.transfer.payment='2'; r.transfer.change_beneficiary=true;
+  r.beneficiary.primary=[{first:'Tobi',last:'Okafor',relationship:'Spouse of owner',share:'100'},{},{}];
+  r.beneficiary.contingent=[{first:'Zara',last:'Okafor',relationship:'Granddaughter',share:'100'},{},{}];
+  r.beneficiary.minor={first:'Zara',last:'Okafor',trustee:'Amara Okafor',relationship:'Mother'};
+  r.pad={frequency:'monthly', day:'15', bank:{name:'RBC Royal Bank', address:'1025 W Georgia St, Vancouver, BC V6E 3N9', transit:'01234', institution:'003', account:'5012345'}, holders:['Amara Okafor',''], joint:false};
+  r.third_party={payer_differs:'no', access:'no'};
+  r.compliance={disclosure_on_file:true, consent:{given:true, by:'Daniel Okafor', at:new Date().toISOString()}, id_check:{method:'in_person', document:'BC driver\'s licence', done:true}, received:{}};
+  r.signing={place:'Vancouver, BC', date:new Date().toISOString().slice(0,10), prefill_date:false, witness:'Chun-Ting Ho'};
+  r.advisor={name:'Chun-Ting Ho, CFA', code:''};
+  return r;
+}
+let state = loadDraft() || sample();
+let step = 0;
+
+function loadDraft(){ try{ const t=localStorage.getItem(DRAFT_KEY); if(!t) return null; const o=JSON.parse(t); return o && o.schema==='ega.policy_change.v1' ? deepMerge(blank(), o) : null; }catch(e){ return null; } }
+let saveTimer=null;
+function saveDraft(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); }catch(e){} }, 300); }
+function deepMerge(base, over){
+  if(Array.isArray(base) && Array.isArray(over)){ const out=base.slice(); over.forEach((v,i)=>{ out[i]= (i<base.length && typeof base[i]==='object' && base[i] && typeof v==='object' && v) ? deepMerge(base[i],v) : v; }); return out; }
+  if(base && typeof base==='object' && over && typeof over==='object'){ const out={...base}; for(const k of Object.keys(over)){ out[k] = (k in base && base[k] && typeof base[k]==='object' && over[k] && typeof over[k]==='object') ? deepMerge(base[k], over[k]) : over[k]; } return out; }
+  return over===undefined ? base : over;
+}
+function getP(path){ return path.split('.').reduce((o,k)=> (o==null?undefined:o[k]), state); }
+function setP(path, val){
+  const ks=path.split('.'); let o=state;
+  for(let i=0;i<ks.length-1;i++){ const k=ks[i], nk=ks[i+1]; if(o[k]==null || typeof o[k]!=='object') o[k]= /^\d+$/.test(nk)?[]:{}; o=o[k]; }
+  o[ks[ks.length-1]]=val;
+}
+
+// ---------- dynamic rows ----------
+const esc = (s)=> String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function benTable(id, key){
+  let h='<tr><th></th><th>First name</th><th>Last name</th><th>Relationship to insured</th><th>Designation</th><th>Share %</th></tr>';
+  for(let i=0;i<3;i++){ const b='beneficiary.'+key+'.'+i;
+    h+=`<tr><td class="n">${i+1}</td><td><input type="text" id="${id}f${i}" data-k="${b}.first" aria-label="Beneficiary ${i+1} first name"></td><td><input type="text" id="${id}l${i}" data-k="${b}.last" aria-label="Beneficiary ${i+1} last name"></td><td><input type="text" id="${id}r${i}" data-k="${b}.relationship" aria-label="Relationship"></td>
+    <td><select id="${id}d${i}" data-k="${b}.irrevocable" data-bool="1" aria-label="Designation"><option value="false">Revocable</option><option value="true">Irrevocable</option></select></td>
+    <td><input type="text" id="${id}s${i}" data-k="${b}.share" inputmode="numeric" maxlength="3" style="width:70px" aria-label="Share percent"></td></tr>`; }
+  document.getElementById(id).innerHTML=h;
+}
+function ownersBlock(){
+  let h='';
+  for(let i=0;i<2;i++){ const b='transfer.owners.'+i;
+    h+=`<fieldset><legend><span class="sec">A1–A2</span>New policyowner ${i+1}${i?' <span class="hint">(optional)</span>':''}</legend><div class="grid">
+      <label class="f">Full name<input type="text" id="no${i}n" data-k="${b}.name"></label>
+      <label class="f">Date of birth<input type="date" id="no${i}d" data-k="${b}.dob"></label>
+      <label class="f">Relationship to the insured<input type="text" id="no${i}r" data-k="${b}.relationship"></label>
+      <label class="f">Civic number and street<input type="text" id="no${i}s" data-k="${b}.street"></label>
+      <label class="f">Apt.<input type="text" id="no${i}a" data-k="${b}.apt"></label>
+      <label class="f">City<input type="text" id="no${i}c" data-k="${b}.city"></label>
+      <label class="f">Province<input type="text" id="no${i}p" data-k="${b}.province"></label>
+      <label class="f">Postal code<input type="text" id="no${i}z" data-k="${b}.postal" class="mono"></label>
+      <label class="f">Phone (home)<input type="tel" id="no${i}h" data-k="${b}.phone_home"></label>
+      <label class="f">Phone (cell)<input type="tel" id="no${i}m" data-k="${b}.phone_cell"></label>
+      <label class="f">Tax residence<select id="no${i}t" data-k="${b}.tax_canada" data-bool="1"><option value="true">Canada</option><option value="false">Outside Canada (FRA1737A)</option></select></label>
+      <span data-if="isUL" style="display:contents">
+      <label class="f">Occupation and field<input type="text" id="no${i}o" data-k="${b}.occupation"></label>
+      <label class="f">Employer<input type="text" id="no${i}e" data-k="${b}.employer"></label>
+      <label class="f">Employment status<input type="text" id="no${i}x" data-k="${b}.status" placeholder="employee, owner, self-employed…"></label>
+      <label class="f">Photo ID reviewed<select id="no${i}i" data-k="${b}.id_doc"><option value="">Select</option><option value="drivers">Driver's licence</option><option value="passport">Passport</option><option value="citizenship">Citizenship card</option><option value="other">Other (specify)</option></select></label>
+      <label class="f">Other ID, specify<input type="text" id="no${i}io" data-k="${b}.id_other"></label>
+      <label class="f">Document number<input type="text" id="no${i}in" data-k="${b}.id_number"></label>
+      <label class="f">Jurisdiction<input type="text" id="no${i}ij" data-k="${b}.id_jurisdiction"></label>
+      <label class="f">Expiry date<input type="date" id="no${i}ie" data-k="${b}.id_expiry"></label>
+      </span></div></fieldset>`; }
+  document.getElementById('newOwners').innerHTML=h;
+}
+function simpleTable(id, base, n, cols){
+  let h='<tr><th></th>'+cols.map(c=>`<th>${c[1]}</th>`).join('')+'</tr>';
+  for(let i=0;i<n;i++){ h+=`<tr><td class="n">${i+1}</td>`+cols.map(c=>`<td><input type="${c[2]||'text'}" id="${id}${c[0]}${i}" data-k="${base}.${i}.${c[0]}" aria-label="${c[1]} ${i+1}"></td>`).join('')+'</tr>'; }
+  document.getElementById(id).innerHTML=h;
+}
+benTable('tblPrim','primary'); benTable('tblCont','contingent'); ownersBlock();
+simpleTable('tblSucc','transfer.contingent',2,[['name','Full name'],['relationship','Relationship to insured'],['dob','Date of birth','date']]);
+simpleTable('tblTrust','transfer.trust.parties',4,[['name','Full name'],['address','Full address'],['occupation','Occupation']]);
+
+// type cards
+const TYPE_INFO = {
+  beneficiary:['Owner and witness sign. Shares must total 100%.'],
+  ownership_transfer:['Branches by new owner: individual, corporation, trust or estate, non-profit. Includes tax declarations.'],
+  assignment:['Collateral assignment to a lender. Two originals are signed by the owner, witnesses and the assignee.'],
+  revoke_cession:['The lender releases an assignment. The cessionary signs, not the client.'],
+  pad:['New or changed bank withdrawals for up to three policies. Needs a VOID cheque.']
+};
+document.getElementById('typeCards').innerHTML = Object.entries(M.CHANGE_TYPES).map(([k,v])=>
+  `<label class="choice"><input type="radio" name="ctype" value="${k}" data-k="change_type"><div class="code">${v.form}${v.copies>1?' · 2 originals':''}</div><div class="t">${v.label}</div><div class="d">${TYPE_INFO[k][0]}</div></label>`).join('');
+
+// ---------- conditions ----------
+const ct = ()=> state.change_type;
+const ul = ()=> state.policy.product==='universal_life';
+const nt = ()=> state.transfer.new_type||'individual';
+const COND = {
+  irrev:()=>state.policy.has_irrevocable, assigned:()=>state.policy.has_assignment, bankrupt:()=>state.policy.owner_bankrupt,
+  benefBlock:()=> ct()==='beneficiary' || (ct()==='ownership_transfer' && state.transfer.change_beneficiary),
+  isTransfer:()=>ct()==='ownership_transfer', isAssign:()=>ct()==='assignment', isCession:()=>ct()==='revoke_cession', isPad:()=>ct()==='pad', isUL:ul,
+  ntIndividual:()=>nt()==='individual', ntIndividualUL:()=>nt()==='individual'&&ul(), ntCorp:()=>nt()==='corporation', ntTrust:()=>nt()==='trust_estate', ntNpo:()=>nt()==='nonprofit', ntEntity:()=>nt()!=='individual',
+  trustParties:()=>!ul(),
+  notSpouse:()=>state.transfer.decl.spouse!=='yes', formerSpouse:()=>state.transfer.decl.spouse!=='yes' && state.transfer.decl.former_spouse==='yes', consideration:()=>state.transfer.decl.consideration==='yes',
+  padBlock:()=> ct()==='pad' || (ct()==='ownership_transfer' && ['1','2','4'].includes(String(state.transfer.payment))),
+  padMonthly:()=>state.pad.frequency!=='annual', padJoint:()=>state.pad.joint,
+  thirdParty:()=> ul() && (ct()==='pad'||ct()==='ownership_transfer'),
+  tpYes:()=> state.third_party.payer_differs==='yes' || state.third_party.access==='yes'
+};
+
+// ---------- binding ----------
+function pull(){ // state -> inputs
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    const v=getP(el.dataset.k);
+    if(el.type==='checkbox') el.checked=!!v;
+    else if(el.type==='radio') el.checked = String(v)===el.value;
+    else if(el.dataset.bool) el.value = String(v===undefined ? (el.options[0].value) : v);
+    else el.value = v==null ? '' : v;
+  });
+}
+document.addEventListener('input', onEdit); document.addEventListener('change', onEdit);
+function onEdit(e){
+  const el=e.target; if(!el.dataset || !el.dataset.k) return;
+  let v;
+  if(el.type==='checkbox') v=el.checked;
+  else if(el.type==='radio'){ if(!el.checked) return; v=el.value; }
+  else if(el.dataset.bool) v = el.value==='true';
+  else v=el.value;
+  setP(el.dataset.k, v);
+  if(el.dataset.k==='compliance.consent.given') state.compliance.consent.at = v ? new Date().toISOString() : '';
+  if(state.is_sample && e.type==='change'){ state.is_sample=false; }
+  refresh(); saveDraft();
+}
+
+// ---------- render ----------
+function refresh(){
+  document.querySelectorAll('[data-if]').forEach(el=>{ const f=COND[el.dataset.if]; el.hidden = f ? !f() : false; });
+  document.querySelectorAll('section[data-step]').forEach(s=> s.hidden = Number(s.dataset.step)!==step);
+  document.getElementById('sampleBanner').hidden = !state.is_sample;
+  renderSteps(); renderDetailHead(); renderTotals(); renderCase(); renderConsent();
+  if(step===4) renderReview();
+  document.getElementById('btnBack').disabled = step===0;
+  document.getElementById('btnNext').hidden = step===STEPS.length-1;
+}
+function renderSteps(){
+  document.getElementById('steps').innerHTML = STEPS.map((s,i)=>`<button type="button" class="${i===step?'on':''} ${i<step?'done':''}" data-go="${i}" ${i===step?'aria-current="step"':''}><span class="n">${i+1}</span>${s}</button>`).join('');
+}
+function renderDetailHead(){
+  const t=M.CHANGE_TYPES[ct()];
+  const ledes={
+    beneficiary:'Insured 1 life-insurance beneficiaries, page 1 of FIND0205A. Critical illness beneficiaries and a second insured are completed by hand.',
+    ownership_transfer:'Sections A to O of FIND0206A. Only the sections that apply to this transfer are shown.',
+    assignment:'Collateral assignment of the contract to a lender, FIND0072A.',
+    revoke_cession:'The lender surrenders its assignment, FIND0203A.',
+    pad:'Sections 1 to 6 of FIND0168A.'
+  };
+  document.getElementById('detailTitle').textContent = t.label;
+  document.getElementById('detailLede').textContent = ledes[ct()];
+  document.getElementById('benSec').textContent = ct()==='ownership_transfer' ? 'L' : 'p.1';
+  document.getElementById('padSec').textContent = ct()==='ownership_transfer' ? 'O' : '2–5';
+  document.getElementById('tpSec').textContent = ct()==='ownership_transfer' ? 'K' : '6';
+}
+function renderTotals(){
+  [['primary','totPrim'],['contingent','totCont']].forEach(([k,id])=>{
+    const rows=(state.beneficiary[k]||[]).filter(x=>x && (x.first||x.last));
+    const el=document.getElementById(id);
+    if(!rows.length){ el.textContent=''; el.className='total'; return; }
+    const t=rows.reduce((a,x)=>a+(Number(x.share)||0),0);
+    el.textContent = 'Total '+t+'%'+(t===100?'':' — must be 100%');
+    el.className='total '+(t===100?'good':'bad');
+  });
+}
+function renderConsent(){
+  const c=state.compliance.consent;
+  document.getElementById('consStamp').textContent = c.given && c.at ? 'Consent recorded '+new Date(c.at).toLocaleString('en-CA',{dateStyle:'medium',timeStyle:'short'})+(c.by?' · '+c.by:'') : '';
+}
+function readiness(){
+  const r=state, c=r.compliance, t=r.transfer, items=[];
+  const add=(ok,label)=>items.push({ok:!!ok,label});
+  add(r.policy.number,'Policy number');
+  add((r.policy.owners||[]).some(o=>o && o.name),'Current policyowner named');
+  if(ct()==='beneficiary') add((r.beneficiary.primary||[]).some(x=>x&&(x.first||x.last)),'At least one primary beneficiary');
+  if(ct()==='ownership_transfer'){
+    if(nt()==='individual') add((t.owners||[]).some(o=>o&&o.name),'New owner named');
+    if(nt()==='corporation') add(t.corp&&t.corp.name,'Corporation named');
+    if(nt()==='trust_estate') add(t.trust&&t.trust.name,'Trust or estate named');
+    if(nt()==='nonprofit') add(t.npo&&t.npo.name,'Organization named');
+    add(t.decl.spouse && t.decl.canada && t.decl.consideration,'Section F tax declarations answered');
+  }
+  if(ct()==='assignment') add(r.assignment.assignee_name,'Assignee named');
+  if(ct()==='revoke_cession') add(r.cession.cessionaries,'Cessionary named');
+  if(COND.padBlock()) add(r.pad.bank && r.pad.bank.transit && r.pad.bank.institution && r.pad.bank.account && (r.pad.holders||[])[0],'Bank details and account holder');
+  add(c.disclosure_on_file,'Advisor disclosure on file');
+  add(c.consent.given,'Privacy consent recorded');
+  add(c.id_check.done,'Requester identity verified');
+  return items;
+}
+function renderCase(){
+  const t=M.CHANGE_TYPES[ct()];
+  document.getElementById('cfForm').textContent=t.form;
+  document.getElementById('cfLabel').textContent=t.label;
+  document.getElementById('cfCopies').textContent= t.copies>1 ? 'Sign two originals. Beneva returns one registered copy.' : 'One signed original goes to Beneva.';
+  const req=M.requirements(state);
+  const rd=readiness(); const open=rd.filter(x=>!x.ok).length;
+  document.getElementById('cfReadyPill').innerHTML = open ? `<span class="pill bad">${open} open</span>` : '<span class="pill ok">Ready</span>';
+  document.getElementById('cfReady').innerHTML = rd.map(x=>`<li><span class="dot ${x.ok?'ok':'bad'}"></span><span>${esc(x.label)}</span></li>`).join('');
+  document.getElementById('cfSignN').textContent = req.signers.length;
+  document.getElementById('cfSigners').innerHTML = req.signers.map(s=>`<li><span class="dot ${/needed/.test(s.who)?'bad':'ok'}"></span><span>${esc(s.who)}<span class="meta">${esc(s.role)} · ${esc(s.section)}</span></span></li>`).join('') || '<li class="empty">No signers yet</li>';
+  const rec=state.compliance.received||{};
+  document.getElementById('cfAttach').innerHTML = req.attachments.length ? req.attachments.map(a=>`<li><label class="chk"><input type="checkbox" id="rcv_${a.id}" data-k="compliance.received.${a.id}" ${rec[a.id]?'checked':''}><span>${esc(a.label)}<span class="meta">${esc(a.why)}</span></span></label></li>`).join('') : '<li class="empty">Nothing beyond the signed form</li>';
+  const notes=t.plan(state).notes;
+  const w=req.warnings.concat(notes);
+  document.getElementById('cfWarnCard').hidden = !w.length;
+  document.getElementById('cfWarn').innerHTML = w.map(x=>`<li><span class="dot warn"></span><span>${esc(x)}</span></li>`).join('');
+}
+function renderReview(){
+  const t=M.CHANGE_TYPES[ct()], p=state.policy;
+  const plan=t.plan(state);
+  const nFields=Object.keys(plan.text).length+Object.keys(plan.radio).length+Object.keys(plan.check).length;
+  const ins=(p.insureds||[]).map(M.helpers.fullName).filter(Boolean).join(', ')||'—';
+  const own=(p.owners||[]).map(o=>o&&o.name).filter(Boolean).join(', ')||'—';
+  document.getElementById('reviewSummary').innerHTML = `<dl>
+    <dt>Change</dt><dd>${esc(t.label)} <span class="mono">(${t.form})</span></dd>
+    <dt>Policy</dt><dd class="mono">${esc(p.number||'—')}</dd>
+    <dt>Insured</dt><dd>${esc(ins)}</dd>
+    <dt>Owner</dt><dd>${esc(own)}</dd>
+    <dt>Fields to fill</dt><dd>${nFields}</dd>
+    <dt>Signatures</dt><dd>${M.requirements(state).signers.length} people sign by hand or e-signature</dd></dl>`;
+}
+
+// ---------- navigation ----------
+document.getElementById('steps').addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(b){ step=Number(b.dataset.go); refresh(); window.scrollTo({top:0}); }});
+document.getElementById('btnNext').onclick=()=>{ step=Math.min(STEPS.length-1,step+1); refresh(); window.scrollTo({top:0}); };
+document.getElementById('btnBack').onclick=()=>{ step=Math.max(0,step-1); refresh(); window.scrollTo({top:0}); };
+document.getElementById('btnNew').onclick=()=>{ const c=document.getElementById('btnClear'); c.hidden=!c.hidden; };
+document.getElementById('btnClear').onclick=()=>{ state=blank(); step=0; try{localStorage.removeItem(DRAFT_KEY);}catch(e){} document.getElementById('btnClear').hidden=true; pull(); refresh(); toast('Started a blank change request'); };
+
+// ---------- import ----------
+function findKey(o, names, depth=0){
+  if(!o || typeof o!=='object' || depth>5) return undefined;
+  for(const k of Object.keys(o)){ if(names.includes(k.toLowerCase()) && (typeof o[k]==='string'||typeof o[k]==='number') && String(o[k]).trim()) return String(o[k]).trim(); }
+  for(const k of Object.keys(o)){ const v=findKey(o[k],names,depth+1); if(v!==undefined) return v; }
+  return undefined;
+}
+function importRecord(obj){
+  if(!obj || typeof obj!=='object') throw new Error('That file is not a JSON object.');
+  if(obj.schema==='ega.policy_change.v1'){ const keepType=state.change_type; state=deepMerge(blank(), obj); state.change_type=obj.change_type||keepType; state.is_sample=false; return 'Loaded change record '+(obj.policy&&obj.policy.number||'')+'.'; }
+  if(obj.schema==='ega.policy_record.v1' || obj.policy){ state.policy=deepMerge(blank().policy, obj.policy||{}); if(obj.client) state.client=obj.client; state.is_sample=false; return 'Loaded the policy on file '+(state.policy.number||'')+'.'; }
+  // intake client record: pull what we can find
+  const name=findKey(obj,['client_name','clientname','full_name','fullname','name','legal_name']);
+  const first=findKey(obj,['first_name','firstname','given_name']); const last=findKey(obj,['last_name','lastname','surname','family_name']);
+  const dob=findKey(obj,['dob','date_of_birth','birth_date','birthdate']);
+  const phone=findKey(obj,['phone','phone_number','mobile','cell']); const email=findKey(obj,['email','email_address']);
+  const prov=findKey(obj,['province','prov']);
+  const full = name || [first,last].filter(Boolean).join(' ');
+  if(!full) throw new Error('No client name found in that file. Expected a field such as "name" or "client_name".');
+  const parts=full.split(/\s+/);
+  const f=first||parts.slice(0,-1).join(' ')||parts[0], l=last||(parts.length>1?parts[parts.length-1]:'');
+  state.is_sample=false;
+  state.client={name:full, dob:dob||'', phone:phone||'', email:email||''};
+  state.policy.owners[0]={name:full};
+  state.policy.insureds[0]={first:f,last:l};
+  if(prov && /^[A-Z]{2}$/.test(prov.toUpperCase())) state.policy.province=prov.toUpperCase();
+  if(!state.pad.holders[0]) state.pad.holders[0]=full;
+  if(!state.compliance.consent.by) state.compliance.consent.by=full;
+  const pulled=['name'].concat(dob?['date of birth']:[], phone?['phone']:[], email?['email']:[], prov?['province']:[]);
+  return 'Pulled '+pulled.join(', ')+' for '+full+' from the intake record. They are set as owner and insured; adjust if that is wrong.';
+}
+function doImport(text){
+  const note=document.getElementById('loadNote');
+  try{ const msg=importRecord(JSON.parse(text)); pull(); refresh(); saveDraft(); note.textContent=msg; note.style.color='var(--ok)'; }
+  catch(e){ note.textContent = e instanceof SyntaxError ? 'That isn\'t valid JSON. Check the file or pasted text.' : e.message; note.style.color='var(--bad)'; }
+}
+document.getElementById('fileLoad').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(doImport); e.target.value=''; });
+document.getElementById('btnPasteToggle').onclick=()=>{ const b=document.getElementById('pasteBox'); b.hidden=!b.hidden; };
+document.getElementById('btnPasteLoad').onclick=()=> doImport(document.getElementById('pasteJson').value);
+
+// ---------- output ----------
+let downloadsNs; const dlReady = (window.claude && window.claude.use) ? window.claude.use('downloads').then(ns=>{downloadsNs=ns;}).catch(()=>{}) : Promise.resolve();
+async function offer(filename, blob){
+  await dlReady;
+  if(downloadsNs){
+    try{ await downloadsNs.save({filename, data:blob}); return 'saved'; }
+    catch(e){ if(e && e.code==='declined') return 'declined'; if(e && e.code==='rate_limited') return 'busy'; if(!['unavailable','not_granted','capability_disabled','capability_removed'].includes(e&&e.code)) throw e; }
+  }
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); return 'saved';
+}
+const slug=(s)=>String(s||'policy').replace(/[^A-Za-z0-9-]+/g,'_').replace(/^_|_$/g,'');
+const blankCache={};
+async function blankBytes(t){
+  if(blankCache[t.form]) return blankCache[t.form];
+  try{ const r=await fetch(t.file); if(!r.ok) throw 0; const b=await r.arrayBuffer(); blankCache[t.form]=b; return b; }
+  catch(e){ return null; }
+}
+function result(html, err){ const el=document.getElementById('genResult'); el.innerHTML=`<div class="result ${err?'err':''}">${html}</div>`; }
+document.getElementById('blankFile').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; blankCache[M.CHANGE_TYPES[ct()].form]=await f.arrayBuffer(); document.getElementById('blankLoader').hidden=true; genPdf(); });
+async function genPdf(){
+  const t=M.CHANGE_TYPES[ct()]; const btn=document.getElementById('btnPdf');
+  btn.disabled=true; btn.textContent='Filling '+t.form+'…';
+  try{
+    const bytes=await blankBytes(t);
+    if(!bytes){ document.getElementById('blankName').textContent=t.form+'.pdf'; document.getElementById('blankLoader').hidden=false; return; }
+    const res=await M.fillPdf(window.PDFLib, bytes.slice(0), t.plan(state));
+    const name=`${slug(state.policy.number)}_${t.form}_${new Date().toISOString().slice(0,10)}.pdf`;
+    const how=await offer(name, new Blob([res.bytes],{type:'application/pdf'}));
+    if(how==='declined'){ result('Save cancelled. Nothing was downloaded.', true); return; }
+    if(how==='busy'){ result('A save prompt is already open. Finish that one, then try again.', true); return; }
+    result(`<b>${esc(name)}</b> is ready: ${res.filled} fields filled on ${t.form}.`+(res.missing.length?` <br>${res.missing.length} field(s) were not found on this form version: <code>${esc(res.missing.join(', '))}</code>`:'')+` Open it in Acrobat to check it, then route it for signatures.`);
+    state.generated={form:t.form, at:new Date().toISOString(), fields:res.filled}; saveDraft();
+  }catch(e){ result('Couldn\'t fill the form: '+esc(e && e.message || e), true); }
+  finally{ btn.disabled=false; btn.textContent='Generate filled PDF'; }
+}
+document.getElementById('btnPdf').onclick=genPdf;
+document.getElementById('btnJson').onclick=async()=>{
+  const t=M.CHANGE_TYPES[ct()]; const req=M.requirements(state);
+  const out=Object.assign({}, state, {updated_at:new Date().toISOString(), form:t.form, requirements:req, readiness:readiness(), carrier_fields:t.plan(state)});
+  delete out.is_sample;
+  const how=await offer(`${slug(state.policy.number)}_${t.form}_change.json`, new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));
+  if(how==='saved') toast('Change record saved');
+};
+document.getElementById('btnSavePolicy').onclick=async()=>{
+  const how=await offer(`${slug(state.policy.number)}_policy_record.json`, new Blob([JSON.stringify({schema:'ega.policy_record.v1', saved_at:new Date().toISOString(), policy:state.policy, client:state.client},null,2)],{type:'application/json'}));
+  if(how==='saved') toast('Policy record saved. Load it next time to pre-fill.');
+};
+let toastT; function toast(m){ const el=document.getElementById('toast'); el.textContent=m; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true,3200); }
+
+pull(); refresh();
+})();
+</script>
+
+</body>
+</html>
